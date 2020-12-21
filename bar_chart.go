@@ -129,9 +129,9 @@ func (bc BarChart) Render(rp RendererProvider, w io.Writer) error {
 		yr = bc.setRangeDomains(canvasBox, yr)
 	}
 	bc.drawCanvas(r, canvasBox)
+	bc.drawYAxis(r, canvasBox, yr, yt)
 	bc.drawBars(r, canvasBox, yr)
 	bc.drawXAxis(r, canvasBox)
-	bc.drawYAxis(r, canvasBox, yr, yt)
 
 	bc.drawTitle(r)
 	for _, a := range bc.Elements {
@@ -288,6 +288,24 @@ func (bc BarChart) drawYAxis(r Renderer, canvasBox Box, yr Range, ticks []Tick) 
 			axisStyle.GetTextOptions().WriteToRenderer(r)
 			tb = r.MeasureText(t.Label)
 			Draw.Text(r, t.Label, canvasBox.Right+DefaultYAxisMargin+5, ty+(tb.Height()>>1), axisStyle)
+		}
+
+		ya := bc.YAxis
+
+		if !ya.Zero.Style.Hidden {
+			ya.Zero.Render(r, canvasBox, yr, false, Style{})
+		}
+
+		if !ya.GridMajorStyle.Hidden || !ya.GridMinorStyle.Hidden {
+			for _, gl := range ya.GetGridLines(ticks) {
+				if (gl.IsMinor && !ya.GridMinorStyle.Hidden) || (!gl.IsMinor && !ya.GridMajorStyle.Hidden) {
+					defaults := ya.GridMajorStyle
+					if gl.IsMinor {
+						defaults = ya.GridMinorStyle
+					}
+					gl.Render(r, canvasBox, yr, false, gl.Style.InheritFrom(defaults))
+				}
+			}
 		}
 
 	}
